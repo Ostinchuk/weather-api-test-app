@@ -92,7 +92,7 @@ class S3StorageProvider(StorageProvider):
                 recent_files = []
 
                 for obj in response["Contents"]:
-                    if obj["LastModified"].replace(tzinfo=None) >= cutoff_time:
+                    if obj["LastModified"] >= cutoff_time:
                         recent_files.append((obj["Key"], obj["LastModified"]))
 
                 if not recent_files:
@@ -139,7 +139,7 @@ class S3StorageProvider(StorageProvider):
 
                 expired_keys = []
                 for obj in response["Contents"]:
-                    if obj["LastModified"].replace(tzinfo=None) < cutoff_time:
+                    if obj["LastModified"] < cutoff_time:
                         expired_keys.append({"Key": obj["Key"]})
 
                 if not expired_keys:
