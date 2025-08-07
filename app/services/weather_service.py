@@ -117,6 +117,8 @@ class WeatherService:
                 event_data.metadata.update(
                     {
                         "cache_hit": True,
+                        "cached": True,
+                        "external_api_called": False,
                         "cache_age_seconds": cache_age_seconds,
                         "processing_time_ms": (
                             datetime.now() - start_time
@@ -148,6 +150,8 @@ class WeatherService:
             event_data.metadata.update(
                 {
                     "cache_hit": False,
+                    "cached": False,
+                    "external_api_called": True,
                     "storage_path": storage_path,
                     "processing_time_ms": (datetime.now() - start_time).total_seconds()
                     * 1000,
