@@ -63,3 +63,19 @@ class CacheError(WeatherAPIError):
     def __init__(self, message: str, operation: str | None = None):
         super().__init__(message)
         self.operation = operation
+
+
+class StorageError(WeatherAPIError):
+    """Exception raised when storage operations fail"""
+
+    def __init__(self, message: str, provider: str | None = None):
+        super().__init__(message)
+        self.provider = provider
+
+
+class DatabaseError(WeatherAPIError):
+    """Exception raised when database operations fail"""
+
+    def __init__(self, message: str, operation: str | None = None):
+        super().__init__(message)
+        self.operation = operation
