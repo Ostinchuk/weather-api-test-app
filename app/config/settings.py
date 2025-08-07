@@ -23,7 +23,7 @@ class Settings(BaseSettings):
 
     weather_api_key: str = Field(..., description="OpenWeatherMap API key")
     weather_api_url: HttpUrl = Field(
-        default="https://api.openweathermap.org/data/2.5/weather",
+        default=HttpUrl("https://api.openweathermap.org/data/2.5/weather"),
         description="Weather API base URL",
     )
     weather_api_timeout: int = Field(
@@ -69,6 +69,9 @@ class Settings(BaseSettings):
 
     health_check_timeout: int = Field(
         default=10, description="Health check timeout in seconds"
+    )
+    health_check_city: str = Field(
+        default="London", description="City to use for health check requests"
     )
 
     @property
