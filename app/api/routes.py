@@ -156,7 +156,9 @@ async def get_weather(
     except ExternalAPIError as e:
         logger.error("External API error", city=city, error=str(e))
         if "not found" in str(e).lower():
-            raise HTTPException(status_code=404, detail=f"City '{city}' not found") from e
+            raise HTTPException(
+                status_code=404, detail=f"City '{city}' not found"
+            ) from e
         raise HTTPException(
             status_code=503, detail="Weather service temporarily unavailable"
         ) from e
@@ -168,11 +170,15 @@ async def get_weather(
             error=str(e),
             error_type=type(e).__name__,
         )
-        raise HTTPException(status_code=500, detail="Internal service error occurred") from e
+        raise HTTPException(
+            status_code=500, detail="Internal service error occurred"
+        ) from e
 
     except WeatherServiceError as e:
         logger.error("Weather service error", city=city, error=str(e))
-        raise HTTPException(status_code=500, detail="Weather service error occurred") from e
+        raise HTTPException(
+            status_code=500, detail="Weather service error occurred"
+        ) from e
 
     except Exception as e:
         logger.error(
@@ -181,7 +187,9 @@ async def get_weather(
             error=str(e),
             error_type=type(e).__name__,
         )
-        raise HTTPException(status_code=500, detail="An unexpected error occurred") from e
+        raise HTTPException(
+            status_code=500, detail="An unexpected error occurred"
+        ) from e
 
 
 @router.get(

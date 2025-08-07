@@ -8,7 +8,7 @@ import structlog
 from botocore.exceptions import ClientError
 
 from app.config.settings import settings
-from app.models.events import EventStatus, EventType
+from app.models.events import EventData, EventStatus, EventType
 from app.utils.exceptions import DatabaseError
 
 from .base import DatabaseProvider
@@ -346,6 +346,82 @@ class DynamoDBProvider(DatabaseProvider):
         except Exception as e:
             self.logger.error("health_check_error", error=str(e))
             return False
+
+    async def log_event(self, event_data: EventData) -> str:
+        """Log an event using EventData model"""
+        try:
+            # Input validation
+            self._validate_city_name(event_data.city)
+            self._validate_timestamp(event_data.timestamp)
+
+            event_id = event_data.event_id or str(uuid.uuid4())
+
+            self.logger.info(
+                "logging_event",
+                event_id=event_id,
+                event_type=event_data.event_type,
+                city=event_data.city,
+                status=event_data.status,
+            )
+
+            item = {
+                "event_id": {"S": event_id},
+                "event_type": {"S": event_data.event_type},
+                "city": {"S": event_data.city.lower()},
+                "city_display": {"S": event_data.city},
+                "timestamp": {"S": event_data.timestamp.isoformat()},
+                "timestamp_epoch": {"N": str(int(event_data.timestamp.timestamp()))},
+                "status": {"S": event_data.status},
+            }
+
+            if event_data.storage_path:
+                item["storage_path"] = {"S": event_data.storage_path}
+            if event_data.error_message:
+                item["error_message"] = {"S": event_data.error_message}
+
+            # Handle metadata fields
+            response_time_ms = event_data.metadata.get("response_time_ms")
+            if response_time_ms is not None:
+                item["response_time_ms"] = {"N": str(response_time_ms)}
+
+            cached = event_data.metadata.get("cached", False)
+            item["cached"] = {"BOOL": cached}
+
+            external_api_called = event_data.metadata.get("external_api_called", True)
+            item["external_api_called"] = {"BOOL": external_api_called}
+
+            async with await self._get_client() as dynamodb:
+                await dynamodb.put_item(TableName=self.table_name, Item=item)
+
+                self.logger.info(
+                    "event_logged",
+                    event_id=event_id,
+                    event_type=event_data.event_type,
+                    city=event_data.city,
+                    status=event_data.status,
+                )
+                return event_id
+
+        except ClientError as e:
+            error_code = e.response.get("Error", {}).get("Code", "Unknown")
+            self.logger.error(
+                "dynamodb_log_failed",
+                event_type=event_data.event_type,
+                city=event_data.city,
+                error_code=error_code,
+                error=str(e),
+            )
+            raise DatabaseError(
+                f"Failed to log event to DynamoDB: {error_code} - {str(e)}"
+            ) from e
+        except Exception as e:
+            self.logger.error(
+                "log_event_failed",
+                event_type=event_data.event_type,
+                city=event_data.city,
+                error=str(e),
+            )
+            raise DatabaseError(f"Failed to log event: {str(e)}") from e
 
     async def create_table_if_not_exists(self) -> bool:
         """Create DynamoDB table if it doesn't exist (utility method)"""

@@ -1,5 +1,9 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.events import EventData
 
 
 class DatabaseProvider(ABC):
@@ -79,5 +83,18 @@ class DatabaseProvider(ABC):
 
         Returns:
             True if healthy, False otherwise
+        """
+        pass
+
+    @abstractmethod
+    async def log_event(self, event_data: "EventData") -> str:
+        """
+        Log an event using EventData model
+
+        Args:
+            event_data: EventData instance containing event information
+
+        Returns:
+            Event ID or identifier
         """
         pass

@@ -7,7 +7,7 @@ import aiosqlite
 import structlog
 
 from app.config.settings import settings
-from app.models.events import EventStatus, EventType, WeatherRequestEvent
+from app.models.events import EventData, EventStatus, EventType, WeatherRequestEvent
 from app.utils.exceptions import DatabaseError
 
 from .base import DatabaseProvider
@@ -331,6 +331,65 @@ class LocalDatabaseProvider(DatabaseProvider):
         except Exception as e:
             self.logger.error("health_check_failed", error=str(e))
             return False
+
+    async def log_event(self, event_data: EventData) -> str:
+        """Log an event using EventData model"""
+        try:
+            await self._initialize_tables()
+
+            event_id = event_data.event_id or str(uuid.uuid4())
+
+            self.logger.info(
+                "logging_event",
+                event_id=event_id,
+                event_type=event_data.event_type,
+                city=event_data.city,
+                status=event_data.status,
+            )
+
+            async with await self._get_connection() as db:
+                await db.execute(
+                    """
+                    INSERT INTO weather_events (
+                        event_id, event_type, city, city_display, timestamp,
+                        timestamp_epoch, status, storage_path, error_message,
+                        response_time_ms, cached, external_api_called
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        event_id,
+                        event_data.event_type,
+                        event_data.city.lower(),
+                        event_data.city,
+                        event_data.timestamp.isoformat(),
+                        int(event_data.timestamp.timestamp()),
+                        event_data.status,
+                        event_data.storage_path,
+                        event_data.error_message,
+                        event_data.metadata.get("response_time_ms"),
+                        event_data.metadata.get("cached", False),
+                        event_data.metadata.get("external_api_called", True),
+                    ),
+                )
+                await db.commit()
+
+                self.logger.info(
+                    "event_logged",
+                    event_id=event_id,
+                    event_type=event_data.event_type,
+                    city=event_data.city,
+                    status=event_data.status,
+                )
+                return event_id
+
+        except Exception as e:
+            self.logger.error(
+                "log_event_failed",
+                event_type=event_data.event_type,
+                city=event_data.city,
+                error=str(e),
+            )
+            raise DatabaseError(f"Failed to log event: {str(e)}") from e
 
     async def log_event_with_details(
         self,
