@@ -1,6 +1,6 @@
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -81,14 +81,14 @@ class LocalFileStorageProvider(StorageProvider):
             for file_path in self.storage_path.glob(pattern):
                 if file_path.is_file():
                     stat = file_path.stat()
-                    modified_time = datetime.fromtimestamp(stat.st_mtime, datetime.UTC)
+                    modified_time = datetime.fromtimestamp(stat.st_mtime, timezone.utc)
                     matching_files.append((file_path, modified_time))
 
             if not matching_files:
                 logger.debug(f"No cached data found for {city}")
                 return None
 
-            cutoff_time = datetime.now(datetime.UTC) - timedelta(
+            cutoff_time = datetime.now(timezone.utc) - timedelta(
                 minutes=max_age_minutes
             )
             recent_files = [
@@ -125,7 +125,7 @@ class LocalFileStorageProvider(StorageProvider):
     async def delete_expired_data(self, max_age_minutes: int = 5) -> int:
         """Delete expired weather data from local file system"""
         try:
-            cutoff_time = datetime.now(datetime.UTC) - timedelta(
+            cutoff_time = datetime.now(timezone.utc) - timedelta(
                 minutes=max_age_minutes
             )
             deleted_count = 0
@@ -136,7 +136,7 @@ class LocalFileStorageProvider(StorageProvider):
 
                 try:
                     stat = file_path.stat()
-                    modified_time = datetime.fromtimestamp(stat.st_mtime, datetime.UTC)
+                    modified_time = datetime.fromtimestamp(stat.st_mtime, timezone.utc)
 
                     if modified_time < cutoff_time:
                         file_path.unlink()

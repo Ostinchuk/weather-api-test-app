@@ -1,5 +1,5 @@
 import hashlib
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from app.config.settings import settings
@@ -28,19 +28,19 @@ class CacheService:
     def _is_data_expired(self, timestamp: datetime) -> bool:
         """Check if cached data is expired based on TTL"""
         if not timestamp.tzinfo:
-            timestamp = timestamp.replace(tzinfo=UTC)
+            timestamp = timestamp.replace(tzinfo=timezone.utc)
 
         expiry_time = timestamp + timedelta(minutes=self.ttl_minutes)
-        current_time = datetime.now(UTC)
+        current_time = datetime.now(timezone.utc)
 
         return current_time > expiry_time
 
     def _calculate_cache_age_seconds(self, timestamp: datetime) -> int:
         """Calculate age of cached data in seconds"""
         if not timestamp.tzinfo:
-            timestamp = timestamp.replace(tzinfo=UTC)
+            timestamp = timestamp.replace(tzinfo=timezone.utc)
 
-        current_time = datetime.now(UTC)
+        current_time = datetime.now(timezone.utc)
         age = current_time - timestamp
         return int(age.total_seconds())
 

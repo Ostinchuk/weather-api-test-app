@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 import httpx
@@ -185,7 +185,7 @@ class WeatherClient:
                 visibility=data.get("visibility", 0.0) / 1000
                 if data.get("visibility")
                 else None,  # Convert to km
-                timestamp=datetime.now(),
+                timestamp=datetime.now(timezone.utc),
                 source="openweathermap",
             )
 

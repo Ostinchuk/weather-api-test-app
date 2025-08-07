@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Annotated, Any
 
 import structlog
@@ -268,7 +268,7 @@ async def health_check(
         error_response = {
             "service": "unhealthy",
             "error": str(e),
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
         return JSONResponse(status_code=503, content=error_response)

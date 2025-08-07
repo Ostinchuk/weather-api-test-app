@@ -1,6 +1,6 @@
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import aioboto3
@@ -86,7 +86,9 @@ class S3StorageProvider(StorageProvider):
                     logger.debug(f"No cached data found for {city}")
                     return None
 
-                cutoff_time = datetime.now(datetime.UTC) - timedelta(minutes=max_age_minutes)
+                cutoff_time = datetime.now(timezone.utc) - timedelta(
+                    minutes=max_age_minutes
+                )
                 recent_files = []
 
                 for obj in response["Contents"]:
@@ -122,7 +124,9 @@ class S3StorageProvider(StorageProvider):
         """Delete expired weather data from S3"""
         try:
             async with self.session.client("s3") as s3_client:
-                cutoff_time = datetime.now(datetime.UTC) - timedelta(minutes=max_age_minutes)
+                cutoff_time = datetime.now(timezone.utc) - timedelta(
+                    minutes=max_age_minutes
+                )
 
                 response = await s3_client.list_objects_v2(
                     Bucket=self.bucket_name,

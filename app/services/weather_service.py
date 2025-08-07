@@ -6,7 +6,7 @@ and database providers to handle the complete flow of weather data requests.
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from app.config.settings import Settings
@@ -235,7 +235,7 @@ class WeatherService:
         health_status = {
             "service": "healthy",
             "components": {},
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
         try:
@@ -311,7 +311,7 @@ class WeatherService:
             deleted_count = await self._cache_service.invalidate_expired_cache()
             return {
                 "deleted_entries": deleted_count,
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
         except Exception as e:
             logger.error(f"Failed to invalidate expired cache: {e}")
