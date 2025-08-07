@@ -8,6 +8,8 @@ class WeatherAPIError(Exception):
         super().__init__(message)
         self.message = message
         self.details = details or {}
+        self.status_code = 500
+        self.error_code = "WEATHER_API_ERROR"
 
 
 class ExternalAPIError(WeatherAPIError):
@@ -79,3 +81,11 @@ class DatabaseError(WeatherAPIError):
     def __init__(self, message: str, operation: str | None = None):
         super().__init__(message)
         self.operation = operation
+
+
+class WeatherServiceError(WeatherAPIError):
+    """Exception raised when the weather service encounters errors"""
+
+    def __init__(self, message: str, details: dict[str, Any] | None = None):
+        super().__init__(message, details)
+        self.error_code = "WEATHER_SERVICE_ERROR"

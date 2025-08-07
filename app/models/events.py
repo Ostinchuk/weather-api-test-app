@@ -1,5 +1,6 @@
 from datetime import datetime
 from enum import Enum
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -18,6 +19,7 @@ class EventType(str, Enum):
 class EventStatus(str, Enum):
     """Status of an event"""
 
+    PENDING = "pending"
     SUCCESS = "success"
     FAILED = "failed"
     PARTIAL = "partial"
@@ -41,6 +43,22 @@ class WeatherRequestEvent(BaseModel):
         True, description="Whether external API was called"
     )
 
+    class Config:
+        json_encoders = {datetime: lambda v: v.isoformat()}
+
+
+class EventData(BaseModel):
+    """Generic event data model used by the weather service"""
+    
+    event_id: str | None = Field(None, description="Unique event identifier")
+    event_type: EventType = Field(..., description="Type of event")
+    city: str = Field(..., description="City name")
+    timestamp: datetime = Field(..., description="Event timestamp")
+    status: EventStatus = Field(default=EventStatus.PENDING, description="Event status")
+    storage_path: str | None = Field(None, description="Storage path for data")
+    error_message: str | None = Field(None, description="Error message if failed")
+    metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    
     class Config:
         json_encoders = {datetime: lambda v: v.isoformat()}
 
