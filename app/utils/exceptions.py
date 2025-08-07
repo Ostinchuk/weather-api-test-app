@@ -55,3 +55,11 @@ class ConfigurationError(WeatherAPIError):
     """Exception raised when configuration is invalid"""
 
     pass
+
+
+class CacheError(WeatherAPIError):
+    """Exception raised when cache operations fail"""
+
+    def __init__(self, message: str, operation: str | None = None):
+        super().__init__(message)
+        self.operation = operation
